@@ -13,6 +13,11 @@ At this stage we had to transform our initial data, from a not well formatted te
 ## Graph Model
 In this point we had to create a graph model. The components of this model are the Game and the Position. The Game node refers to a single unique game of two players each time. The Position nodes can be a large number depends on the duration of the game. The Game node is connected to a Position node by a Move. And the Positions are connected to each other also by a move. As we can see in Figure 1 - Model Components below, the Game node has specific attributes(Black, Date, GameNumber etc.). Also, the Position node has specific attributes(FEN) as well. The “MOVE” that connects the two nodes has also specific attributes(MoveNumber, Side, GameNumber) its self. In Figure 2 - High Level Model View, we can see the high level view of the model, which is how Games are connected with a Position and how the Positions are connected to each other. 
 
+![alt text](https://github.com/ggeop/neo4j-chessgame/blob/master/Photos/Untitled-1-02.png)
+
+
+![alt text](https://github.com/ggeop/neo4j-chessgame/blob/master/Photos/Untitled-1-01.png)
+
 At this point we would like to mention that we preferred a simple model implementation. Alternatively, we could have create a much more complicated model with more components. For instance, we could have built a graph with different nodes for players (black and white), events and eco. But this approach it would not give us better results in the second part of the assignment but it would give us a more clear representation of the model.
 
 ## Data Model Creation
@@ -22,32 +27,36 @@ We had to create a graph model in Neo4j platform in order to have the data as a 
 We began by creating the position of the nodes. Generally, all positions on the chessboard are not unique (same positions may occur in several games) but in our case we had to create position nodes uniquely described by their FEN property. In order to achieve that we create a constraint on the position nodes and defined that those nodes are uniquely described by the FEN attribute, in Cypher when you create unique id then it’s automatically create an index. Then we loaded the relevant position file and we merged the position nodes according to the FEN attribute. 
 
 
-'''
+'''{cy}
 //Create position nodes CREATE CONSTRAINT ON (p:Position) ASSERT p.FEN IS UNIQUE; //Load CSV USING PERIODIC COMMIT LOAD CSV WITH HEADERS FROM " file:///Position_Nodes.csv" AS line MERGE (p: Position{FEN: line.FEN}); 
 '''
+
+![alt text](https://github.com/ggeop/neo4j-chessgame/blob/master/Photos/create_position_nodes.png)
 
 ### Game Nodes
 After we created the Position nodes we had to create the Game nodes. So, we created the Game nodes with the attribute GameNumber as the unique id and then we loaded the relevant file and we merged the nodes according to their attributes.
 
-'''
+'''{cy}
 //Create Game nodes CREATE CONSTRAINT ON (g:Game) ASSERT g.GameNumber IS UNIQUE; 
  
 //Load CSV USING PERIODIC COMMIT LOAD CSV WITH HEADERS FROM "file:///Game_Nodes.csv" AS line MERGE (g:Game {GameNumber: line.GameNumber,Black: line.Black,White: line.White, BlackElo: toInteger(line.BlackElo), Date: line.Date, ECO: line.ECO, Event: line.Event, Moves: toInteger(line.Moves), Opening: line.Opening, Result: line.Result, Round: toInteger(line.Round), Site: line.Site, WhiteElo: toInteger(line.WhiteElo)}) 
 '''
+![alt text](https://github.com/ggeop/neo4j-chessgame/blob/master/Photos/create_game_nodes.png)
 
 ### Create Position-Position Relationships 
 Now it is time to create the relationships between the Position nodes. That will indicate how a move is a connection between two consecutive Position nodes. We match the two Position nodes each time using FEN. Then we create directed relationships between the nodes, and that relationship is called a MOVE. 
 
-'''
+'''{cy}
 //Create relationships between Position - Position USING PERIODIC COMMIT LOAD CSV WITH HEADERS FROM "file:///Move_edge.csv" AS line MATCH (start_node: Position {FEN: line.starting_position}) 
 Dataset  
 MATCH(end_node: Position {FEN: line.ending_position}) CREATE (start_node)-[r:MOVE]->(end_node) SET  r.Move=line.Move, r.Side=line.Side, r.GameNumber=line.GameNumber 
 '''
+![alt text](https://github.com/ggeop/neo4j-chessgame/blob/master/Photos/Create_positon-position.PNG)
 
 ### Create Game-Position Relationships
 Finally, we had to create the relationships between Games and Position nodes. Hence, we matched the games using the GameNumber and the first positions using FEN which are the unique ids. Then, we create the move that indicates how a Game node is connected to a Position node. And finally, we create the set of the properties again. 
 
-'''
+'''{cy}
 //Create relationships between Game - position_node USING PERIODIC COMMIT LOAD CSV WITH HEADERS FROM "file:///Game_Position.csv" AS line MATCH (games: Game {GameNumber: line.GameNumber}) MATCH (first_node: Position {FEN: line.FEN}) CREATE (games)-[r:MOVE]->(first_node) SET  r.Move=line.Move, r.Side=line.Side, r.GameNumber=line.GameNumber 
 '''
 
