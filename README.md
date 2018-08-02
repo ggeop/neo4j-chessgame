@@ -30,7 +30,11 @@ We began by creating the position of the nodes. Generally, all positions on the 
 
 
 ```{cy}
-//Create position nodes CREATE CONSTRAINT ON (p:Position) ASSERT p.FEN IS UNIQUE; //Load CSV USING PERIODIC COMMIT LOAD CSV WITH HEADERS FROM " file:///Position_Nodes.csv" AS line MERGE (p: Position{FEN: line.FEN}); 
+//Create position nodes
+CREATE CONSTRAINT ON (p:Position) ASSERT p.FEN IS UNIQUE; 
+
+//Load CSV USING PERIODIC COMMIT 
+LOAD CSV WITH HEADERS FROM " file:///Position_Nodes.csv" AS line MERGE (p: Position{FEN: line.FEN}); 
 ```
 
 ![alt text](https://github.com/ggeop/neo4j-chessgame/blob/master/Photos/create_position_nodes.png)
@@ -40,9 +44,24 @@ We began by creating the position of the nodes. Generally, all positions on the 
 After we created the Position nodes we had to create the Game nodes. So, we created the Game nodes with the attribute GameNumber as the unique id and then we loaded the relevant file and we merged the nodes according to their attributes.
 
 ```{cy}
-//Create Game nodes CREATE CONSTRAINT ON (g:Game) ASSERT g.GameNumber IS UNIQUE; 
+//Create Game nodes
+CREATE CONSTRAINT ON (g:Game) ASSERT g.GameNumber IS UNIQUE; 
  
-//Load CSV USING PERIODIC COMMIT LOAD CSV WITH HEADERS FROM "file:///Game_Nodes.csv" AS line MERGE (g:Game {GameNumber: line.GameNumber,Black: line.Black,White: line.White, BlackElo: toInteger(line.BlackElo), Date: line.Date, ECO: line.ECO, Event: line.Event, Moves: toInteger(line.Moves), Opening: line.Opening, Result: line.Result, Round: toInteger(line.Round), Site: line.Site, WhiteElo: toInteger(line.WhiteElo)}) 
+//Load CSV USING PERIODIC COMMIT 
+LOAD CSV WITH HEADERS FROM "file:///Game_Nodes.csv" 
+AS line MERGE (g:Game {GameNumber: line.GameNumber,
+               Black: line.Black,
+               White: line.White, 
+               BlackElo: toInteger(line.BlackElo), 
+               Date: line.Date, 
+               ECO: line.ECO, 
+               Event: line.Event, 
+               Moves: toInteger(line.Moves), 
+               Opening: line.Opening, 
+               Result: line.Result, 
+               Round: toInteger(line.Round), 
+               Site: line.Site, 
+               WhiteElo: toInteger(line.WhiteElo)}) 
 ```
 
 ![alt text](https://github.com/ggeop/neo4j-chessgame/blob/master/Photos/create_game_nodes.png)
@@ -52,9 +71,13 @@ After we created the Position nodes we had to create the Game nodes. So, we crea
 Now it is time to create the relationships between the Position nodes. That will indicate how a move is a connection between two consecutive Position nodes. We match the two Position nodes each time using FEN. Then we create directed relationships between the nodes, and that relationship is called a MOVE. 
 
 ```{cy}
-//Create relationships between Position - Position USING PERIODIC COMMIT LOAD CSV WITH HEADERS FROM "file:///Move_edge.csv" AS line MATCH (start_node: Position {FEN: line.starting_position}) 
-Dataset  
-MATCH(end_node: Position {FEN: line.ending_position}) CREATE (start_node)-[r:MOVE]->(end_node) SET  r.Move=line.Move, r.Side=line.Side, r.GameNumber=line.GameNumber 
+//Create relationships between Position - Position 
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "file:///Move_edge.csv" AS line MATCH (start_node: Position {FEN: line.starting_position}) 
+
+MATCH(end_node: Position {FEN: line.ending_position}) 
+CREATE (start_node)-[r:MOVE]->(end_node) 
+SET  r.Move=line.Move, r.Side=line.Side, r.GameNumber=line.GameNumber 
 ```
 
 ![alt text](https://github.com/ggeop/neo4j-chessgame/blob/master/Photos/Create_positon-position.PNG)
@@ -63,7 +86,11 @@ MATCH(end_node: Position {FEN: line.ending_position}) CREATE (start_node)-[r:MOV
 Finally, we had to create the relationships between Games and Position nodes. Hence, we matched the games using the GameNumber and the first positions using FEN which are the unique ids. Then, we create the move that indicates how a Game node is connected to a Position node. And finally, we create the set of the properties again. 
 
 ```{cy}
-//Create relationships between Game - position_node USING PERIODIC COMMIT LOAD CSV WITH HEADERS FROM "file:///Game_Position.csv" AS line MATCH (games: Game {GameNumber: line.GameNumber}) MATCH (first_node: Position {FEN: line.FEN}) CREATE (games)-[r:MOVE]->(first_node) SET  r.Move=line.Move, r.Side=line.Side, r.GameNumber=line.GameNumber 
+//Create relationships between Game - position_node 
+USING PERIODIC COMMIT
+LOAD CSV WITH HEADERS FROM "file:///Game_Position.csv" AS line MATCH (games: Game {GameNumber: line.GameNumber}) 
+MATCH (first_node: Position {FEN: line.FEN}) CREATE (games)-[r:MOVE]->(first_node) 
+SET  r.Move=line.Move, r.Side=line.Side, r.GameNumber=line.GameNumber 
 ```
 
 ### Final Model
