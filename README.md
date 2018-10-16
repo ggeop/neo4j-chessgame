@@ -1,4 +1,4 @@
-﻿![alt text](https://github.com/ggeop/neo4j-chessgame/blob/master/Photos/header_image.png)
+﻿![alt text](https://github.com/ggeop/neo4j-chessgame/blob/master/Photos/header_image.jpg)
 Image from: (http://www.007museum.com/James_Bond_Chess.htm)
 
 # Chess Board Game
